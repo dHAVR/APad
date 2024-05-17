@@ -3,6 +3,7 @@ import 'package:apad/models/note.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:apad/pages/new_note_page.dart';
 
 import '../component/drawer.dart';
 
@@ -19,40 +20,23 @@ class _NotesPageState extends State<NotesPage> {
   @override
   void initState() {
     super.initState();
-
     readNotes();
   }
 
-// create a note
-  void createNote() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        content: TextField(
-          controller: textController,
-        ),
-        actions: [
-          MaterialButton(
-            onPressed: () {
-              context.read<NoteDatabase>().addNote(textController.text);
-
-              textController.clear();
-
-              Navigator.pop(context);
-            },
-            child: const Text("Add"),
-          )
-        ],
-      ),
-    );
+  // create a note
+  void createNote(BuildContext context) {
+    Navigator.pop(context);
+    Navigator.push(context, MaterialPageRoute(
+      builder: (context) => NewNotePage(),
+    ));
   }
 
-// read notes
+  // read notes
   void readNotes() {
     context.read<NoteDatabase>().fetchNotes();
   }
 
-//update a note
+  // update a note
   void updateNote(Note note) {
     textController.text = note.text;
     showDialog(
@@ -63,9 +47,7 @@ class _NotesPageState extends State<NotesPage> {
         actions: [
           MaterialButton(
             onPressed: () {
-              context
-                  .read<NoteDatabase>()
-                  .updateNote(note.id, textController.text);
+              context.read<NoteDatabase>().updateNote(note.id, textController.text);
               textController.clear();
               Navigator.pop(context);
             },
@@ -94,11 +76,17 @@ class _NotesPageState extends State<NotesPage> {
         foregroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       backgroundColor: Theme.of(context).colorScheme.background,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          createNote();
-        },
-        child: const Icon(Icons.add),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: FloatingActionButton(
+          onPressed: () {
+            Navigator.pop(context);
+            Navigator.push(context, MaterialPageRoute(
+              builder: (context) => NewNotePage(),
+            ));
+          },
+          child: const Icon(Icons.add),
+        ),
       ),
       drawer: MyDrawer(),
       body: Column(
@@ -109,12 +97,14 @@ class _NotesPageState extends State<NotesPage> {
             child: Text(
               'Notes',
               style: GoogleFonts.dmSerifText(
-                  fontSize: 48,
-                  color: Theme.of(context).colorScheme.inversePrimary),
+                fontSize: 48,
+                color: Theme.of(context).colorScheme.inversePrimary,
+              ),
             ),
           ),
           Expanded(
             child: ListView.builder(
+              padding: EdgeInsets.only(bottom: 80), // Добавляем отступ снизу для кнопки
               itemCount: currentNotes.length,
               itemBuilder: (context, index) {
                 final note = currentNotes[index];
@@ -142,7 +132,6 @@ class _NotesPageState extends State<NotesPage> {
               },
             ),
           ),
-
         ],
       ),
     );
