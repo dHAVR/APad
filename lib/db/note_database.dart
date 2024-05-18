@@ -3,51 +3,48 @@ import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 
-class NoteDatabase extends ChangeNotifier{
-  
+class NoteDatabase extends ChangeNotifier {
   static late Isar isar;
 
   static Future<void> initialize() async {
     final dir = await getApplicationDocumentsDirectory();
     isar = await Isar.open(
-       [NoteSchema],
-       directory: dir.path,
+      [NoteSchema],
+      directory: dir.path,
     );
   }
 
   final List<Note> currentNotes = [];
 
-
-  //create a new note
-  Future<void> addNote(String providedText) async{
-      final note = Note()..text = providedText;
-      await isar.writeTxn(() => isar.notes.put(note));
-      fetchNotes();
+  // Create a new note
+  Future<void> addNote(String text) async {
+    final note = Note()
+      ..text = text;
+    await isar.writeTxn(() => isar.notes.put(note));
+    fetchNotes();
   }
-  
-  Future<void> fetchNotes() async{
+
+  // Fetch notes
+  Future<void> fetchNotes() async {
     List<Note> fetchedNotes = await isar.notes.where().findAll();
     currentNotes.clear();
     currentNotes.addAll(fetchedNotes);
     notifyListeners();
   }
 
-
-  //update a note
-  Future<void> updateNote(int id, String updatedtext) async{
-     final currentNote = await isar.notes.get(id);
-     if(currentNote != null){
-      currentNote.text = updatedtext;
+  // Update a note
+  Future<void> updateNote(int id, String updatedText) async {
+    final currentNote = await isar.notes.get(id);
+    if (currentNote != null) {
+      currentNote.text = updatedText;
       await isar.writeTxn(() => isar.notes.put(currentNote));
       await fetchNotes();
-     }
+    }
   }
 
-
-  //delete a note
-  Future<void> deleteNote(int id) async{
+  // Delete a note
+  Future<void> deleteNote(int id) async {
     await isar.writeTxn(() => isar.notes.delete(id));
     await fetchNotes();
   }
-
 }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:apad/pages/new_note_page.dart';
+import 'package:flutter_html/flutter_html.dart';
 
 import '../component/drawer.dart';
 
@@ -47,7 +48,11 @@ class _NotesPageState extends State<NotesPage> {
         actions: [
           MaterialButton(
             onPressed: () {
-              context.read<NoteDatabase>().updateNote(note.id, textController.text);
+              final text = _convertTextToHtml(textController.text, TextStyle());
+              context.read<NoteDatabase>().updateNote(
+                note.id,
+                text
+              );
               textController.clear();
               Navigator.pop(context);
             },
@@ -61,6 +66,25 @@ class _NotesPageState extends State<NotesPage> {
   // delete a note
   void deleteNote(int id) {
     context.read<NoteDatabase>().deleteNote(id);
+  }
+
+  String _convertTextToHtml(String text, TextStyle style) {
+    final StringBuffer htmlBuffer = StringBuffer();
+
+    if (style.fontWeight == FontWeight.bold) {
+      htmlBuffer.write('<b>$text</b>');
+    } else if (style.fontStyle == FontStyle.italic) {
+      htmlBuffer.write('<i>$text</i>');
+    } else if (style.decoration == TextDecoration.underline) {
+      htmlBuffer.write('<u>$text</u>');
+    } else {
+      htmlBuffer.write(text);
+    }
+
+    final colorHex = style.color?.value.toRadixString(16).padLeft(6, '0');
+    final fontSize = style.fontSize != null ? 'font-size: ${style.fontSize}px;' : '';
+
+    return '<span style="color: #$colorHex; $fontSize">${htmlBuffer.toString()}</span>';
   }
 
   @override
@@ -104,16 +128,16 @@ class _NotesPageState extends State<NotesPage> {
           ),
           Expanded(
             child: ListView.builder(
-              padding: EdgeInsets.only(bottom: 80), // Добавляем отступ снизу для кнопки
+              padding: EdgeInsets.only(bottom: 80), // Add padding to bottom
               itemCount: currentNotes.length,
               itemBuilder: (context, index) {
                 final note = currentNotes[index];
 
                 return Card(
                   elevation: 4.0,
-                  margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0), // Задает отступы для карт
+                  margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
                   child: ListTile(
-                    title: Text(note.text),
+                    title: Html(data: note.text),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -124,7 +148,7 @@ class _NotesPageState extends State<NotesPage> {
                         IconButton(
                           onPressed: () => deleteNote(note.id),
                           icon: const Icon(Icons.delete),
-                        )
+                        ),
                       ],
                     ),
                   ),
