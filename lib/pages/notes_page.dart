@@ -24,14 +24,6 @@ class _NotesPageState extends State<NotesPage> {
     readNotes();
   }
 
-  // create a note
-  void createNote(BuildContext context) {
-    Navigator.pop(context);
-    Navigator.push(context, MaterialPageRoute(
-      builder: (context) => NewNotePage(),
-    ));
-  }
-
   // read notes
   void readNotes() {
     context.read<NoteDatabase>().fetchNotes();
@@ -39,52 +31,14 @@ class _NotesPageState extends State<NotesPage> {
 
   // update a note
   void updateNote(Note note) {
-    textController.text = note.text;
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text("Update Note"),
-        content: TextField(controller: textController),
-        actions: [
-          MaterialButton(
-            onPressed: () {
-              final text = _convertTextToHtml(textController.text, TextStyle());
-              context.read<NoteDatabase>().updateNote(
-                note.id,
-                text
-              );
-              textController.clear();
-              Navigator.pop(context);
-            },
-            child: const Text("Update"),
-          )
-        ],
-      ),
-    );
+    Navigator.push(context, MaterialPageRoute(
+      builder: (context) => NewNotePage(note: note),
+    ));
   }
 
   // delete a note
   void deleteNote(int id) {
     context.read<NoteDatabase>().deleteNote(id);
-  }
-
-  String _convertTextToHtml(String text, TextStyle style) {
-    final StringBuffer htmlBuffer = StringBuffer();
-
-    if (style.fontWeight == FontWeight.bold) {
-      htmlBuffer.write('<b>$text</b>');
-    } else if (style.fontStyle == FontStyle.italic) {
-      htmlBuffer.write('<i>$text</i>');
-    } else if (style.decoration == TextDecoration.underline) {
-      htmlBuffer.write('<u>$text</u>');
-    } else {
-      htmlBuffer.write(text);
-    }
-
-    final colorHex = style.color?.value.toRadixString(16).padLeft(6, '0');
-    final fontSize = style.fontSize != null ? 'font-size: ${style.fontSize}px;' : '';
-
-    return '<span style="color: #$colorHex; $fontSize">${htmlBuffer.toString()}</span>';
   }
 
   @override
@@ -104,7 +58,6 @@ class _NotesPageState extends State<NotesPage> {
         padding: const EdgeInsets.all(16.0),
         child: FloatingActionButton(
           onPressed: () {
-            Navigator.pop(context);
             Navigator.push(context, MaterialPageRoute(
               builder: (context) => NewNotePage(),
             ));
@@ -161,3 +114,4 @@ class _NotesPageState extends State<NotesPage> {
     );
   }
 }
+

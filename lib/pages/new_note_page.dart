@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:apad/models/note.dart';
 import 'package:apad/db/note_database.dart';
-import 'package:apad/pages/notes_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import 'package:flutter_html/flutter_html.dart';
 
 class NewNotePage extends StatefulWidget {
+  final Note? note;
+
+  NewNotePage({this.note});
+
   @override
   _NewNotePageState createState() => _NewNotePageState();
 }
@@ -18,17 +20,27 @@ class _NewNotePageState extends State<NewNotePage> {
   Color _currentColor = Colors.black;
   double _currentFontSize = 16.0;
 
-  Future<void> createNote() async {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.note != null) {
+      _controller.text = _convertHtmlToText(widget.note!.text);
+    }
+  }
+
+  Future<void> saveNote() async {
     try {
       final text = _convertTextToHtml(_controller.text, _currentTextStyle);
-      await context.read<NoteDatabase>().addNote(
-        text
-      );
+      if (widget.note == null) {
+        await context.read<NoteDatabase>().addNote(text);
+      } else {
+        await context.read<NoteDatabase>().updateNote(
+          widget.note!.id,
+          text,
+        );
+      }
       _controller.clear();
       Navigator.pop(context);
-      Navigator.push(context, MaterialPageRoute(
-        builder: (context) => NotesPage(),
-      ));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving note: $e')),
@@ -104,6 +116,14 @@ class _NewNotePageState extends State<NewNotePage> {
   String _convertTextToHtml(String text, TextStyle style) {
     final StringBuffer htmlBuffer = StringBuffer();
 
+    // Apply default styles if no custom styles are applied
+    if (style == TextStyle()) {
+      style = TextStyle(
+        color: Colors.black,
+        fontSize: 16.0,
+      );
+    }
+
     if (style.fontWeight == FontWeight.bold) {
       htmlBuffer.write('<b>$text</b>');
     } else if (style.fontStyle == FontStyle.italic) {
@@ -114,10 +134,14 @@ class _NewNotePageState extends State<NewNotePage> {
       htmlBuffer.write(text);
     }
 
-    final colorHex = style.color?.value.toRadixString(16).padLeft(6, '0');
+    final colorHex = style.color?.value.toRadixString(16).padLeft(6, '0') ?? '000000';
     final fontSize = style.fontSize != null ? 'font-size: ${style.fontSize}px;' : '';
 
     return '<span style="color: #$colorHex; $fontSize">${htmlBuffer.toString()}</span>';
+  }
+
+  String _convertHtmlToText(String html) {
+    return html.replaceAll(RegExp(r'<[^>]*>'), '');
   }
 
   @override
@@ -128,9 +152,6 @@ class _NewNotePageState extends State<NewNotePage> {
           icon: Icon(Icons.arrow_back),
           onPressed: () {
             Navigator.pop(context);
-            Navigator.push(context, MaterialPageRoute(
-              builder: (context) => NotesPage(),
-            ));
           },
         ),
         actions: [
@@ -184,7 +205,7 @@ class _NewNotePageState extends State<NewNotePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'New note',
+              widget.note == null ? 'New Note' : 'Edit Note',
               style: GoogleFonts.dmSerifText(
                 fontSize: 30,
                 color: Theme.of(context).colorScheme.inversePrimary,
@@ -224,7 +245,7 @@ class _NewNotePageState extends State<NewNotePage> {
       floatingActionButton: Padding(
         padding: const EdgeInsets.all(16.0),
         child: FloatingActionButton(
-          onPressed: createNote,
+          onPressed: saveNote,
           child: Icon(Icons.save),
         ),
       ),

@@ -21,7 +21,7 @@ class DrawerTile extends StatelessWidget {
         title: Text(
           title,
           style: GoogleFonts.dmSerifText(
-              fontSize: 30,
+              fontSize: 25,
               color: Theme.of(context).colorScheme.inversePrimary),
         ),
         leading: leading,
