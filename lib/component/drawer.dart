@@ -14,7 +14,7 @@ class MyDrawer extends StatelessWidget {
         children: [
           DrawerHeader(
             child: Padding(
-              padding: EdgeInsets.only(top: 30.0), // Adjust the padding value as needed
+              padding: EdgeInsets.only(top: 30.0),
               child: Text(
                 "Stay focused"+'\n'+"  with APad",
                 style: GoogleFonts.kalam(
@@ -38,7 +38,6 @@ class MyDrawer extends StatelessWidget {
                   builder: (context) => SettingsPage(),
               )
               );
-
             },
           )
         ],

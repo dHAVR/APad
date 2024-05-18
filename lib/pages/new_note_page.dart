@@ -116,7 +116,6 @@ class _NewNotePageState extends State<NewNotePage> {
   String _convertTextToHtml(String text, TextStyle style) {
     final StringBuffer htmlBuffer = StringBuffer();
 
-    // Apply default styles if no custom styles are applied
     if (style == TextStyle()) {
       style = TextStyle(
         color: Colors.black,

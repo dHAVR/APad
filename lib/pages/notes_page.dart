@@ -85,9 +85,9 @@ class _NotesPageState extends State<NotesPage> {
               itemCount: currentNotes.length,
               itemBuilder: (context, index) {
                 final note = currentNotes[index];
-
                 return Card(
                   elevation: 4.0,
+                  color: Theme.of(context).colorScheme.secondary,
                   margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
                   child: ListTile(
                     title: Html(data: note.text),
