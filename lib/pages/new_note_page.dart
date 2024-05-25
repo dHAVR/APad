@@ -4,6 +4,9 @@ import 'package:apad/models/note.dart';
 import 'package:apad/db/note_database.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:html/parser.dart' as html_parser;
+import 'package:html/dom.dart' as dom;
+
 
 class NewNotePage extends StatefulWidget {
   final Note? note;
@@ -24,9 +27,58 @@ class _NewNotePageState extends State<NewNotePage> {
   void initState() {
     super.initState();
     if (widget.note != null) {
-      _controller.text = _convertHtmlToText(widget.note!.text);
+      _parseHtmlAndApplyStyle(widget.note!.text);
     }
   }
+
+  void _parseHtmlAndApplyStyle(String html) {
+    final document = html_parser.parse(html);
+    final spanElement = document.getElementsByTagName('span').first;
+    final styleString = spanElement.attributes['style'];
+    final noteText = spanElement.text;
+
+    final styles = styleString?.split(';') ?? [];
+    Color color = Colors.black;
+    double fontSize = 16.0;
+    FontWeight fontWeight = FontWeight.normal;
+    FontStyle fontStyle = FontStyle.normal;
+    TextDecoration textDecoration = TextDecoration.none;
+
+    for (var style in styles) {
+      final parts = style.split(':');
+      if (parts.length == 2) {
+        final key = parts[0].trim();
+        final value = parts[1].trim();
+        if (key == 'color') {
+          color = Color(int.parse('ff' + value.substring(1), radix: 16));
+        } else if (key == 'font-size') {
+          fontSize = double.parse(value.replaceAll('px', ''));
+        }
+      }
+    }
+
+    final boldElement = document.getElementsByTagName('b').isNotEmpty;
+    final italicElement = document.getElementsByTagName('i').isNotEmpty;
+    final underlineElement = document.getElementsByTagName('u').isNotEmpty;
+
+    if (boldElement) fontWeight = FontWeight.bold;
+    if (italicElement) fontStyle = FontStyle.italic;
+    if (underlineElement) textDecoration = TextDecoration.underline;
+
+    setState(() {
+      _currentColor = color;
+      _currentFontSize = fontSize;
+      _currentTextStyle = TextStyle(
+        color: _currentColor,
+        fontSize: _currentFontSize,
+        fontWeight: fontWeight,
+        fontStyle: fontStyle,
+        decoration: textDecoration,
+      );
+      _controller.text = noteText ?? '';
+    });
+  }
+
 
   Future<void> saveNote() async {
     try {
@@ -133,7 +185,8 @@ class _NewNotePageState extends State<NewNotePage> {
       htmlBuffer.write(text);
     }
 
-    final colorHex = style.color?.value.toRadixString(16).padLeft(6, '0') ?? '000000';
+    final colorValue = style.color?.value ?? Colors.black.value;
+    final colorHex = (colorValue & 0xFFFFFF).toRadixString(16).padLeft(6, '0');
     final fontSize = style.fontSize != null ? 'font-size: ${style.fontSize}px;' : '';
 
     return '<span style="color: #$colorHex; $fontSize">${htmlBuffer.toString()}</span>';

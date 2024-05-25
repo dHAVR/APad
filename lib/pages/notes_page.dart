@@ -81,7 +81,7 @@ class _NotesPageState extends State<NotesPage> {
           ),
           Expanded(
             child: ListView.builder(
-              padding: EdgeInsets.only(bottom: 80), // Add padding to bottom
+              padding: EdgeInsets.only(bottom: 80),
               itemCount: currentNotes.length,
               itemBuilder: (context, index) {
                 final note = currentNotes[index];
@@ -90,7 +90,16 @@ class _NotesPageState extends State<NotesPage> {
                   color: Theme.of(context).colorScheme.secondary,
                   margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
                   child: ListTile(
-                    title: Html(data: note.text),
+                    title: Html(
+                      data: note.text,
+                      style: {
+                        "body": Style(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white
+                              : Colors.black,
+                        ),
+                      },
+                    ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -114,4 +123,3 @@ class _NotesPageState extends State<NotesPage> {
     );
   }
 }
-

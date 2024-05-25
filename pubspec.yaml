@@ -46,6 +46,7 @@ dependencies:
   flutter_math_fork: ^0.6.0
   flutter_layout_grid: ^2.0.5
   chewie: ^1.2.0
+  html: ^0.15.0
 
 
 
