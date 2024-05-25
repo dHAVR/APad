@@ -7,7 +7,6 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:html/parser.dart' as html_parser;
 import 'package:html/dom.dart' as dom;
 
-
 class NewNotePage extends StatefulWidget {
   final Note? note;
 
@@ -28,6 +27,11 @@ class _NewNotePageState extends State<NewNotePage> {
     super.initState();
     if (widget.note != null) {
       _parseHtmlAndApplyStyle(widget.note!.text);
+    } else {
+      _currentTextStyle = TextStyle(
+        color: Colors.black,
+        fontSize: _currentFontSize,
+      );
     }
   }
 
@@ -35,7 +39,7 @@ class _NewNotePageState extends State<NewNotePage> {
     final document = html_parser.parse(html);
     final spanElement = document.getElementsByTagName('span').first;
     final styleString = spanElement.attributes['style'];
-    final noteText = spanElement.innerHtml;
+    final noteText = spanElement.text;
 
     final styles = styleString?.split(';') ?? [];
     Color color = Colors.black;
@@ -57,10 +61,9 @@ class _NewNotePageState extends State<NewNotePage> {
       }
     }
 
-    final documentBody = html_parser.parse(noteText);
-    final boldElement = documentBody.getElementsByTagName('b').isNotEmpty;
-    final italicElement = documentBody.getElementsByTagName('i').isNotEmpty;
-    final underlineElement = documentBody.getElementsByTagName('u').isNotEmpty;
+    final boldElement = document.getElementsByTagName('b').isNotEmpty;
+    final italicElement = document.getElementsByTagName('i').isNotEmpty;
+    final underlineElement = document.getElementsByTagName('u').isNotEmpty;
 
     if (boldElement) fontWeight = FontWeight.bold;
     if (italicElement) fontStyle = FontStyle.italic;
@@ -76,11 +79,9 @@ class _NewNotePageState extends State<NewNotePage> {
         fontStyle: fontStyle,
         decoration: textDecoration,
       );
-      _controller.text = documentBody.body?.text ?? '';
+      _controller.text = noteText ?? '';
     });
   }
-
-
 
   Future<void> saveNote() async {
     try {
@@ -169,7 +170,6 @@ class _NewNotePageState extends State<NewNotePage> {
 
   String _convertTextToHtml(String text, TextStyle style) {
     final StringBuffer htmlBuffer = StringBuffer();
-    final StringBuffer styleBuffer = StringBuffer();
 
     if (style == TextStyle()) {
       style = TextStyle(
@@ -179,36 +179,20 @@ class _NewNotePageState extends State<NewNotePage> {
     }
 
     if (style.fontWeight == FontWeight.bold) {
-      htmlBuffer.write('<b>');
-    }
-    if (style.fontStyle == FontStyle.italic) {
-      htmlBuffer.write('<i>');
-    }
-    if (style.decoration == TextDecoration.underline) {
-      htmlBuffer.write('<u>');
-    }
-
-    htmlBuffer.write(text);
-
-    if (style.decoration == TextDecoration.underline) {
-      htmlBuffer.write('</u>');
-    }
-    if (style.fontStyle == FontStyle.italic) {
-      htmlBuffer.write('</i>');
-    }
-    if (style.fontWeight == FontWeight.bold) {
-      htmlBuffer.write('</b>');
+      htmlBuffer.write('<b>$text</b>');
+    } else if (style.fontStyle == FontStyle.italic) {
+      htmlBuffer.write('<i>$text</i>');
+    } else if (style.decoration == TextDecoration.underline) {
+      htmlBuffer.write('<u>$text</u>');
+    } else {
+      htmlBuffer.write(text);
     }
 
     final colorValue = style.color?.value ?? Colors.black.value;
     final colorHex = (colorValue & 0xFFFFFF).toRadixString(16).padLeft(6, '0');
-    styleBuffer.write('color: #$colorHex; ');
+    final fontSize = style.fontSize != null ? 'font-size: ${style.fontSize}px;' : '';
 
-    if (style.fontSize != null) {
-      styleBuffer.write('font-size: ${style.fontSize}px;');
-    }
-
-    return '<span style="${styleBuffer.toString()}">${htmlBuffer.toString()}</span>';
+    return '<span style="color: #$colorHex; $fontSize">${htmlBuffer.toString()}</span>';
   }
 
   String _convertHtmlToText(String html) {
