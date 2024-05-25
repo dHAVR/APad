@@ -35,7 +35,7 @@ class _NewNotePageState extends State<NewNotePage> {
     final document = html_parser.parse(html);
     final spanElement = document.getElementsByTagName('span').first;
     final styleString = spanElement.attributes['style'];
-    final noteText = spanElement.text;
+    final noteText = spanElement.innerHtml;
 
     final styles = styleString?.split(';') ?? [];
     Color color = Colors.black;
@@ -57,9 +57,10 @@ class _NewNotePageState extends State<NewNotePage> {
       }
     }
 
-    final boldElement = document.getElementsByTagName('b').isNotEmpty;
-    final italicElement = document.getElementsByTagName('i').isNotEmpty;
-    final underlineElement = document.getElementsByTagName('u').isNotEmpty;
+    final documentBody = html_parser.parse(noteText);
+    final boldElement = documentBody.getElementsByTagName('b').isNotEmpty;
+    final italicElement = documentBody.getElementsByTagName('i').isNotEmpty;
+    final underlineElement = documentBody.getElementsByTagName('u').isNotEmpty;
 
     if (boldElement) fontWeight = FontWeight.bold;
     if (italicElement) fontStyle = FontStyle.italic;
@@ -75,9 +76,10 @@ class _NewNotePageState extends State<NewNotePage> {
         fontStyle: fontStyle,
         decoration: textDecoration,
       );
-      _controller.text = noteText ?? '';
+      _controller.text = documentBody.body?.text ?? '';
     });
   }
+
 
 
   Future<void> saveNote() async {
@@ -167,6 +169,7 @@ class _NewNotePageState extends State<NewNotePage> {
 
   String _convertTextToHtml(String text, TextStyle style) {
     final StringBuffer htmlBuffer = StringBuffer();
+    final StringBuffer styleBuffer = StringBuffer();
 
     if (style == TextStyle()) {
       style = TextStyle(
@@ -176,20 +179,36 @@ class _NewNotePageState extends State<NewNotePage> {
     }
 
     if (style.fontWeight == FontWeight.bold) {
-      htmlBuffer.write('<b>$text</b>');
-    } else if (style.fontStyle == FontStyle.italic) {
-      htmlBuffer.write('<i>$text</i>');
-    } else if (style.decoration == TextDecoration.underline) {
-      htmlBuffer.write('<u>$text</u>');
-    } else {
-      htmlBuffer.write(text);
+      htmlBuffer.write('<b>');
+    }
+    if (style.fontStyle == FontStyle.italic) {
+      htmlBuffer.write('<i>');
+    }
+    if (style.decoration == TextDecoration.underline) {
+      htmlBuffer.write('<u>');
+    }
+
+    htmlBuffer.write(text);
+
+    if (style.decoration == TextDecoration.underline) {
+      htmlBuffer.write('</u>');
+    }
+    if (style.fontStyle == FontStyle.italic) {
+      htmlBuffer.write('</i>');
+    }
+    if (style.fontWeight == FontWeight.bold) {
+      htmlBuffer.write('</b>');
     }
 
     final colorValue = style.color?.value ?? Colors.black.value;
     final colorHex = (colorValue & 0xFFFFFF).toRadixString(16).padLeft(6, '0');
-    final fontSize = style.fontSize != null ? 'font-size: ${style.fontSize}px;' : '';
+    styleBuffer.write('color: #$colorHex; ');
 
-    return '<span style="color: #$colorHex; $fontSize">${htmlBuffer.toString()}</span>';
+    if (style.fontSize != null) {
+      styleBuffer.write('font-size: ${style.fontSize}px;');
+    }
+
+    return '<span style="${styleBuffer.toString()}">${htmlBuffer.toString()}</span>';
   }
 
   String _convertHtmlToText(String html) {
