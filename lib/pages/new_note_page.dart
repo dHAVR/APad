@@ -37,39 +37,40 @@ class _NewNotePageState extends State<NewNotePage> {
 
   void _parseHtmlAndApplyStyle(String html) {
     final document = html_parser.parse(html);
-    final spanElement = document.getElementsByTagName('span').first;
-    final styleString = spanElement.attributes['style'];
-    final noteText = spanElement.text;
+    final spanElements = document.getElementsByTagName('span');
+    final noteText = StringBuffer();
 
-    final styles = styleString?.split(';') ?? [];
-    Color color = Colors.black;
-    double fontSize = 16.0;
-    FontWeight fontWeight = FontWeight.normal;
-    FontStyle fontStyle = FontStyle.normal;
-    TextDecoration textDecoration = TextDecoration.none;
+    for (var spanElement in spanElements) {
+      final styleString = spanElement.attributes['style'];
+      final text = spanElement.text;
+      final styles = styleString?.split(';') ?? [];
+      Color color = Colors.black;
+      double fontSize = 16.0;
+      FontWeight fontWeight = FontWeight.normal;
+      FontStyle fontStyle = FontStyle.normal;
+      TextDecoration textDecoration = TextDecoration.none;
 
-    for (var style in styles) {
-      final parts = style.split(':');
-      if (parts.length == 2) {
-        final key = parts[0].trim();
-        final value = parts[1].trim();
-        if (key == 'color') {
-          color = Color(int.parse('ff' + value.substring(1), radix: 16));
-        } else if (key == 'font-size') {
-          fontSize = double.parse(value.replaceAll('px', ''));
+      for (var style in styles) {
+        final parts = style.split(':');
+        if (parts.length == 2) {
+          final key = parts[0].trim();
+          final value = parts[1].trim();
+          if (key == 'color') {
+            color = Color(int.parse('ff' + value.substring(1), radix: 16));
+          } else if (key == 'font-size') {
+            fontSize = double.parse(value.replaceAll('px', ''));
+          }
         }
       }
-    }
 
-    final boldElement = document.getElementsByTagName('b').isNotEmpty;
-    final italicElement = document.getElementsByTagName('i').isNotEmpty;
-    final underlineElement = document.getElementsByTagName('u').isNotEmpty;
+      final boldElement = spanElement.getElementsByTagName('b').isNotEmpty;
+      final italicElement = spanElement.getElementsByTagName('i').isNotEmpty;
+      final underlineElement = spanElement.getElementsByTagName('u').isNotEmpty;
 
-    if (boldElement) fontWeight = FontWeight.bold;
-    if (italicElement) fontStyle = FontStyle.italic;
-    if (underlineElement) textDecoration = TextDecoration.underline;
+      if (boldElement) fontWeight = FontWeight.bold;
+      if (italicElement) fontStyle = FontStyle.italic;
+      if (underlineElement) textDecoration = TextDecoration.underline;
 
-    setState(() {
       _currentColor = color;
       _currentFontSize = fontSize;
       _currentTextStyle = TextStyle(
@@ -79,7 +80,12 @@ class _NewNotePageState extends State<NewNotePage> {
         fontStyle: fontStyle,
         decoration: textDecoration,
       );
-      _controller.text = noteText ?? '';
+
+      noteText.write(text);
+    }
+
+    setState(() {
+      _controller.text = noteText.toString();
     });
   }
 
@@ -178,25 +184,23 @@ class _NewNotePageState extends State<NewNotePage> {
       );
     }
 
+    String formattedText = text;
+
     if (style.fontWeight == FontWeight.bold) {
-      htmlBuffer.write('<b>$text</b>');
-    } else if (style.fontStyle == FontStyle.italic) {
-      htmlBuffer.write('<i>$text</i>');
-    } else if (style.decoration == TextDecoration.underline) {
-      htmlBuffer.write('<u>$text</u>');
-    } else {
-      htmlBuffer.write(text);
+      formattedText = '<b>$formattedText</b>';
+    }
+    if (style.fontStyle == FontStyle.italic) {
+      formattedText = '<i>$formattedText</i>';
+    }
+    if (style.decoration == TextDecoration.underline) {
+      formattedText = '<u>$formattedText</u>';
     }
 
     final colorValue = style.color?.value ?? Colors.black.value;
     final colorHex = (colorValue & 0xFFFFFF).toRadixString(16).padLeft(6, '0');
     final fontSize = style.fontSize != null ? 'font-size: ${style.fontSize}px;' : '';
 
-    return '<span style="color: #$colorHex; $fontSize">${htmlBuffer.toString()}</span>';
-  }
-
-  String _convertHtmlToText(String html) {
-    return html.replaceAll(RegExp(r'<[^>]*>'), '');
+    return '<span style="color: #$colorHex; $fontSize">$formattedText</span>';
   }
 
   @override
